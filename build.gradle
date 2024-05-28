@@ -1,0 +1,78 @@
+plugins {
+    id("groovy") 
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.application") version "4.1.2"
+    id("io.micronaut.aot") version "4.1.2"
+    id("com.github.node-gradle.node") version "2.2.4"
+}
+
+version = "0.1"
+group = "au.com.clubconnect"
+
+repositories {
+    mavenCentral()
+}
+
+node {
+    version = '14.17.6' // https://nodejs.org/en/
+    download = true
+}
+
+dependencies {
+    implementation("io.micronaut.groovy:micronaut-runtime-groovy")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+
+    implementation("io.micronaut.views:micronaut-views-handlebars")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation('org.apache.commons:commons-lang3:3.14.0')
+    implementation('org.graalvm.js:js:23.0.2')
+    implementation('org.graalvm.js:js-scriptengine:23.0.2')
+
+    compileOnly("io.micronaut:micronaut-http-client")
+    compileOnly("io.micronaut:micronaut-http-validation")
+    compileOnly("io.micronaut.serde:micronaut-serde-processor")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("org.yaml:snakeyaml")
+    testImplementation("io.micronaut:micronaut-http-client")
+}
+
+
+application {
+    mainClass = "au.com.clubconnect.Application"
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+
+graalvmNative.toolchainDetection = false
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("au.com.clubconnect.*")
+    }
+    aot {
+    // Please review carefully the optimizations enabled below
+    // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+        replaceLogbackXml = true
+    }
+}
+
+task npmBuild(type: NpmTask, dependsOn: ['npmInstall']) {
+    group = 'build'
+    description = 'Build the client bundle'
+    args = ['run', 'build']
+}
+
+
+
